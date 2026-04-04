@@ -1,0 +1,19 @@
+{
+  "branch": "main",
+  "depends_recipe": "",
+  "description_control": "read audio CD-Text or query CDDB for album and track info",
+  "description_recipe": "read audio CD-Text or query CDDB for album and track info",
+  "history_source_dir": "cdinfo",
+  "internal_package_name": "enigma2-plugin-extensions-cdinfo",
+  "module_dir_name": "CDInfo",
+  "output_subdir": "cdinfo",
+  "package_name": "enigma2-plugin-extensions-cdinfo",
+  "plugin_src_rel": "cdinfo",
+  "python_package": "CDInfo",
+  "rdepends_recipe": "",
+  "replaces": "",
+  "repo_name": "CDInfo",
+  "rrecommends": "",
+  "rreplaces": "",
+  "selected_from_plugin_list": true
+}
