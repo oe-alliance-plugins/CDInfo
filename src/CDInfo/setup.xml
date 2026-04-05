@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<setupxml>
+	<setup key="CDInfo" title="CDInfo Setup" allowDefault="1">
+		<item level="0" text="Try to extract CDTEXT" description="Extract CD-Text information from the audio CD.">config.plugins.CDInfo.useCDTEXT</item>
+		<item level="0" text="Try to query CDDB" description="Query online CDDB database for album information.">config.plugins.CDInfo.useCDDB</item>
+		<item level="0" text="Playlist string" description="Format string for playlist display. Variables: $i=track, $t=title, $a=artist">config.plugins.CDInfo.displayString</item>
+		<item level="1" text="CDDB overwrites CDTEXT info" description="CDDB information will overwrite CDTEXT if enabled.">config.plugins.CDInfo.preferCDDB</item>
+		<item level="1" text="CDDB server hostname" description="Hostname of the CDDB server.">config.plugins.CDInfo.CDDB_server</item>
+		<item level="1" text="CDDB server port number" description="Port number of the CDDB server.">config.plugins.CDInfo.CDDB_port</item>
+		<item level="1" text="CDDB retrieval timeout (s)" description="Timeout in seconds for CDDB queries.">config.plugins.CDInfo.CDDB_timeout</item>
+		<item level="1" text="Store local CDDB cache" description="Cache CDDB information locally.">config.plugins.CDInfo.CDDB_cache</item>
+	</setup>
+</setupxml>
