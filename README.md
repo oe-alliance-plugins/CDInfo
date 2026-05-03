@@ -33,13 +33,11 @@
 
 ---
 
-### 📜 License Information [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+### 📜 License Information [![License: CC BY-NC-SA 3.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%203.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/3.0/)
 
-This is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation
+This plugin is NOT free software. It is open source and licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
 
-This plugin is released under GPLv3. See [LICENSE](https://www.gnu.org/licenses/gpl-3.0.html#license-text) for full details.
-
-<img width="120" height="58" alt="GPLv3_Logo svg" src="https://github.com/user-attachments/assets/67d32b0a-2a44-4fa9-a972-202daf28808e" />
+This plugin is released under CC BY-NC-SA 3.0. See [LICENSE](LICENSE.txt) for full details.
 
 ---
 
