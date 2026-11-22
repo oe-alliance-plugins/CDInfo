@@ -1,9 +1,10 @@
-from enigma import eConsoleAppContainer
-import xml.dom.minidom
+from codecs import getincrementaldecoder
+from re import sub
+from xml.dom.minidom import Element, parseString
+from enigma import eConsoleAppContainer, eEnv
+from Components.config import config, ConfigSubsection, ConfigInteger, ConfigYesNo, ConfigText
 from Plugins.Plugin import PluginDescriptor
 from Screens.Setup import Setup
-from Components.config import config, ConfigSubsection, ConfigInteger, ConfigYesNo, ConfigText
-
 
 config.plugins.CDInfo = ConfigSubsection()
 config.plugins.CDInfo.useCDTEXT = ConfigYesNo(default=True)
@@ -15,7 +16,7 @@ config.plugins.CDInfo.CDDB_port = ConfigInteger(8880, limits=(1, 65536))
 config.plugins.CDInfo.CDDB_timeout = ConfigInteger(20, limits=(-1, 60))
 config.plugins.CDInfo.CDDB_cache = ConfigYesNo(default=True)
 
-CDTEXTINFO = "/usr/bin/cdtextinfo"
+CDTEXTINFO = f'{eEnv.resolve("${bindir}")}/cdtextinfo'
 
 
 class CDInfo(Setup):
@@ -29,8 +30,10 @@ class Query:
 		self.mp = mediaplayer
 		self.cddb_container = eConsoleAppContainer()
 		self.cddb_output = ""
+		self.cddb_decoder = getincrementaldecoder("utf-8")("replace")
 		self.cdtext_container = eConsoleAppContainer()
 		self.cdtext_output = ""
+		self.cdtext_decoder = getincrementaldecoder("utf-8")("replace")
 		self.tracklisting = {}
 		self.albuminfo = {}
 
@@ -38,13 +41,14 @@ class Query:
 		rc = ""
 		for node in nodelist:
 			if node.nodeType == node.TEXT_NODE:
-				rc = rc + node.data
-			return rc.encode("utf-8")
+				rc += node.data
+		return rc
 
 	def xml_parse_output(self, string):
-		data = string.decode("utf-8", "replace").replace('&', "&amp;").encode("ascii", 'xmlcharrefreplace')
+		data = string.decode("utf-8", "replace") if isinstance(string, bytes) else string
+		data = sub(r"&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9A-Fa-f]+);)", "&amp;", data)
 		try:
-			cdinfodom = xml.dom.minidom.parseString(data)
+			cdinfodom = parseString(data)
 		except Exception:
 			print("[xml_parse_output] error, could not parse")
 			return False
@@ -57,11 +61,11 @@ class Query:
 
 	def xml_parse_query(self, queries_xml):
 		for queries in queries_xml:
-			if queries.nodeType == xml.dom.minidom.Element.nodeType:
+			if queries.nodeType == Element.nodeType:
 				if queries.tagName == 'query':
 					print(f"[xml_parse_query] cdinfo source is {queries.getAttribute('source')}, hit {queries.getAttribute('match')} of {queries.getAttribute('num_matches')}")
 					for query in queries.childNodes:
-						if query.nodeType == xml.dom.minidom.Element.nodeType:
+						if query.nodeType == Element.nodeType:
 							if query.tagName == 'albuminfo':
 								self.xml_parse_albuminfo(query.childNodes)
 							elif query.tagName == 'tracklisting':
@@ -69,7 +73,7 @@ class Query:
 
 	def xml_parse_albuminfo(self, albuminfo_xml):
 		for albuminfo in albuminfo_xml:
-			if albuminfo.nodeType == xml.dom.minidom.Element.nodeType:
+			if albuminfo.nodeType == Element.nodeType:
 				if albuminfo.tagName == 'PERFORMER' or albuminfo.tagName == 'artist':
 					artist = self.get_text(albuminfo.childNodes)
 					self.albuminfo["artist"] = artist
@@ -88,12 +92,12 @@ class Query:
 
 	def xml_parse_tracklisting(self, tracklisting_xml):
 		for tracklist in tracklisting_xml:
-			if tracklist.nodeType == xml.dom.minidom.Element.nodeType:
+			if tracklist.nodeType == Element.nodeType:
 				if tracklist.tagName == 'track':
 					index = int(tracklist.getAttribute("number"))
 					trackinfo = {}
 					for track in tracklist.childNodes:
-						if track.nodeType == xml.dom.minidom.Element.nodeType:
+						if track.nodeType == Element.nodeType:
 							if track.tagName == 'PERFORMER' or track.tagName == 'artist':
 								artist = self.get_text(track.childNodes)
 								trackinfo["artist"] = artist
@@ -147,16 +151,22 @@ class Query:
 		self.cddb_container.execute(*cmd)
 
 	def cddb_avail(self, string):
-		string = string.decode("utf-8", "replace") if isinstance(string, bytes) else string
-		self.cddb_output += string
+		if isinstance(string, bytes):
+			self.cddb_output += self.cddb_decoder.decode(string)
+		else:
+			self.cddb_output += string
 
 	def cdtext_avail(self, string):
-		string = string.decode("utf-8", "replace") if isinstance(string, bytes) else string
-		self.cdtext_output += string
+		if isinstance(string, bytes):
+			self.cdtext_output += self.cdtext_decoder.decode(string)
+		else:
+			self.cdtext_output += string
 
 	def cddb_finished(self, retval):
 		self.cddb_container.appClosed.remove(self.cddb_finished)
 		self.cddb_container.dataAvail.remove(self.cddb_avail)
+		self.cddb_output += self.cddb_decoder.decode(b"", final=True)
+		self.cddb_decoder.reset()
 		if self.xml_parse_output(self.cddb_output):
 			self.update_playlist(replace=config.plugins.CDInfo.preferCDDB.value)
 			self.update_albuminfo(replace=config.plugins.CDInfo.preferCDDB.value)
@@ -166,6 +176,8 @@ class Query:
 	def cdtext_finished(self, retval):
 		self.cdtext_container.appClosed.remove(self.cdtext_finished)
 		self.cdtext_container.dataAvail.remove(self.cdtext_avail)
+		self.cdtext_output += self.cdtext_decoder.decode(b"", final=True)
+		self.cdtext_decoder.reset()
 		if self.xml_parse_output(self.cdtext_output):
 			self.update_playlist(replace=not config.plugins.CDInfo.preferCDDB.value)
 			self.update_albuminfo(replace=not config.plugins.CDInfo.preferCDDB.value)
